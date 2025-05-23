@@ -1,18 +1,13 @@
 package com.ums.demo.controller;
 
-import com.ums.demo.entity.User;
+import com.ums.demo.dto.ApiResponse;
+import com.ums.demo.dto.UserDTO;
 import com.ums.demo.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -21,43 +16,44 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/getAllUsers")
-    public Page<User> getUsers(
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<UserDTO>>> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
-        return userService.getAllUsers(page, size, sortBy, direction);
+        return ResponseEntity.ok(ApiResponse.success(userService.getAllUsers(page, size, sortBy, direction)));
     }
 
-    @GetMapping("/getUserByEmail")
-    public User getUserByEmail(@RequestParam String email) {
-        return userService.getUsersByEmail(email);
+    @GetMapping("/{email}")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserByEmail(@PathVariable String email) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getUsersByEmail(email)));
     }
 
-    @GetMapping("/getUserByFirstName")
-    public List<User> getUsersByFirstName(@RequestParam String firstName) {
-        return userService.getAllUserByFirstName(firstName);
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<Page<UserDTO>>> searchUsers(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return ResponseEntity.ok(ApiResponse.success(userService.searchUsers(firstName, email, page, size)));
     }
 
-    @GetMapping("/example-domain-users")
-    public List<User> getUsersWithExampleDomain() {
-        return userService.getUsersWithExampleDomain();
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserDTO>> createUser(@Valid @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(ApiResponse.success("User created successfully", userService.createUser(userDTO)));
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-        return ResponseEntity.ok(userService.createUser(user));
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", userService.updateUser(id, userDTO)));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        return ResponseEntity.badRequest().body(errors);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
 }
