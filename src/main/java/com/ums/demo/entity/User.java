@@ -9,6 +9,7 @@ public class User {
     @Id // maps the id field as primary key
     @GeneratedValue(strategy = GenerationType.SEQUENCE) // used to generate the strategy type like ids should be stored as sequence or identity etc
     private Long id;
+    @Column(name = "username")
     private String firstName;
     private String email;
 
@@ -17,6 +18,9 @@ public class User {
         this.firstName = firstName;
         this.email = email;
     }
+    public User(){
+    }
+
 
     public Long getId() {
         return id;
